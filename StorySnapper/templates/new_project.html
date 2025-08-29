@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}New Project - Story in Short{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Header -->
+                <div class="text-center mb-5">
+                    <h1 class="display-5 mb-3">
+                        <i data-feather="plus-circle" class="me-3"></i>Create New Project
+                    </h1>
+                    <p class="lead text-muted">Set up a new project to organize and analyze customer reviews and feedback.</p>
+                </div>
+
+                <!-- Form -->
+                <div class="card fade-in">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i data-feather="settings" class="me-2"></i>Project Details
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST">
+                            <div class="mb-4">
+                                <label for="name" class="form-label">Project Name <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control form-control-lg" 
+                                       id="name" 
+                                       name="name" 
+                                       placeholder="e.g., Mobile App Reviews, Q4 Customer Feedback"
+                                       required
+                                       maxlength="200">
+                                <div class="form-text">Choose a descriptive name that helps you identify this project.</div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="description" class="form-label">Description <span class="text-muted">(optional)</span></label>
+                                <textarea class="form-control" 
+                                          id="description" 
+                                          name="description" 
+                                          rows="4" 
+                                          placeholder="Describe what this project is about, what reviews you'll be analyzing, and any specific goals or metrics you want to track."></textarea>
+                                <div class="form-text">Provide context about what you'll be analyzing in this project.</div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{{ url_for('projects') }}" class="btn btn-outline-secondary">
+                                    <i data-feather="arrow-left" class="me-2"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i data-feather="check" class="me-2"></i>Create Project
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Help Section -->
+                <div class="card mt-4 fade-in">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="help-circle" class="me-2"></i>What's Next?
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i data-feather="file-text" class="text-primary me-3 mt-1"></i>
+                                    <div>
+                                        <h6>Add Reviews</h6>
+                                        <small class="text-muted">Start adding customer reviews, feedback, or comments to analyze sentiment and trends.</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i data-feather="message-circle" class="text-primary me-3 mt-1"></i>
+                                    <div>
+                                        <h6>Track Replies</h6>
+                                        <small class="text-muted">Monitor responses to reviews to understand conversation sentiment and engagement.</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i data-feather="trending-up" class="text-primary me-3 mt-1"></i>
+                                    <div>
+                                        <h6>View Analytics</h6>
+                                        <small class="text-muted">Get insights on sentiment trends, keyword analysis, and conversation patterns.</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i data-feather="download" class="text-primary me-3 mt-1"></i>
+                                    <div>
+                                        <h6>Export Data</h6>
+                                        <small class="text-muted">Export your analysis results and insights for reporting and further analysis.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate elements on page load
+    const fadeElements = document.querySelectorAll('.fade-in');
+    fadeElements.forEach((el, index) => {
+        setTimeout(() => {
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+
+    // Auto-focus on project name input
+    document.getElementById('name').focus();
+});
+</script>
+{% endblock %}

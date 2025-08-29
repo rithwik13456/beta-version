@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}{{ review.title or 'Review #' + review.id|string }} - Story in Short{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <!-- Header -->
+        <div class="row mb-5">
+            <div class="col-lg-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('projects') }}">Projects</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('project_details', project_id=review.project.id) }}">{{ review.project.name }}</a></li>
+                        <li class="breadcrumb-item active">Review Details</li>
+                    </ol>
+                </nav>
+                
+                <h1 class="display-5 mb-3">{{ review.title or 'Review #' + review.id|string }}</h1>
+                <div class="d-flex align-items-center gap-3 mb-3 fade-in">
+                    {% if review.sentiment_label %}
+                    <span class="badge sentiment-{{ review.sentiment_label.lower() }} fs-6">
+                        {{ review.sentiment_label }} ({{ "%.2f"|format(review.sentiment_score) }})
+                    </span>
+                    {% endif %}
+                    {% if review.rating %}
+                    <div class="text-warning fs-5">
+                        {% for i in range(review.rating) %}★{% endfor %}
+                        {% for i in range(5 - review.rating) %}☆{% endfor %}
+                    </div>
+                    {% endif %}
+                    <small class="text-muted">
+                        <i data-feather="calendar" class="me-1"></i>{{ review.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                    </small>
+                </div>
+                {% if review.author %}
+                <p class="text-muted">
+                    <i data-feather="user" class="me-1"></i>by {{ review.author }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Review Stats -->
+        <div class="stats-grid mb-5 fade-in">
+            <div class="stat-card">
+                <span class="stat-value">{{ review.word_count or 0 }}</span>
+                <span class="stat-label">Words</span>
+            </div>
+            {% if review.readability_score %}
+            <div class="stat-card">
+                <span class="stat-value">{{ "%.0f"|format(review.readability_score) }}</span>
+                <span class="stat-label">Readability Score</span>
+            </div>
+            {% endif %}
+            <div class="stat-card">
+                <span class="stat-value">{{ review.total_replies }}</span>
+                <span class="stat-label">Replies</span>
+            </div>
+            {% if review.avg_reply_sentiment is not none %}
+            <div class="stat-card">
+                <span class="stat-value {{ 'text-success' if review.avg_reply_sentiment > 0.1 else 'text-danger' if review.avg_reply_sentiment < -0.1 else 'text-warning' }}">
+                    {{ "%.2f"|format(review.avg_reply_sentiment) }}
+                </span>
+                <span class="stat-label">Avg Reply Sentiment</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="row g-4">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <!-- Review Content -->
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i data-feather="file-text" class="me-2"></i>Review Content
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">{{ review.content | replace('\n', '</p><p class="lead">') | safe }}</p>
+                        
+                        {% if review.source_url %}
+                        <div class="mt-3">
+                            <a href="{{ review.source_url }}" target="_blank" rel="noopener" class="text-decoration-none">
+                                <i data-feather="external-link" class="me-1"></i>View Original Source
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Sentiment Analysis -->
+                {% if review.sentiment_label %}
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i data-feather="heart" class="me-2"></i>Sentiment Analysis
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Overall Sentiment</label>
+                                    <div>
+                                        <span class="badge sentiment-{{ review.sentiment_label.lower() }} fs-5">
+                                            {{ review.sentiment_label }}
+                                        </span>
+                                        <span class="text-muted ms-2">({{ "%.3f"|format(review.sentiment_score) }})</span>
+                                    </div>
+                                </div>
+                                
+                                {% if review.sentiment_confidence %}
+                                <div class="mb-3">
+                                    <label class="form-label">Confidence</label>
+                                    <div class="progress">
+                                        <div class="progress-bar" style="width: {{ (review.sentiment_confidence * 100)|round }}%">
+                                            {{ (review.sentiment_confidence * 100)|round }}%
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row g-3 text-center">
+                                    {% if review.positive_score is not none %}
+                                    <div class="col-4">
+                                        <div class="h5 text-success">{{ "%.1f"|format(review.positive_score * 100) }}%</div>
+                                        <small class="text-muted">Positive</small>
+                                    </div>
+                                    {% endif %}
+                                    {% if review.negative_score is not none %}
+                                    <div class="col-4">
+                                        <div class="h5 text-danger">{{ "%.1f"|format(review.negative_score * 100) }}%</div>
+                                        <small class="text-muted">Negative</small>
+                                    </div>
+                                    {% endif %}
+                                    {% if review.neutral_score is not none %}
+                                    <div class="col-4">
+                                        <div class="h5 text-secondary">{{ "%.1f"|format(review.neutral_score * 100) }}%</div>
+                                        <small class="text-muted">Neutral</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Keywords -->
+                {% if review.keywords %}
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i data-feather="tag" class="me-2"></i>Keywords
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="top-words">
+                            {% set keywords = review.keywords | from_json %}
+                            {% for keyword in keywords %}
+                            <span class="word-tag">{{ keyword }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Replies -->
+                <div class="card fade-in">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i data-feather="message-circle" class="me-2"></i>Replies
+                        </h4>
+                        <span class="badge bg-primary">{{ review.total_replies }} replies</span>
+                    </div>
+                    <div class="card-body">
+                        {% if review.replies %}
+                            {% for reply in review.replies %}
+                            <div class="reply-item mb-4 p-3" style="border-left: 3px solid var(--primary-color); background-color: rgba(255, 255, 255, 0.02);">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        {% if reply.author %}
+                                        <h6 class="mb-0">{{ reply.author }}</h6>
+                                        {% endif %}
+                                        <small class="text-muted">{{ reply.created_at.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                                    </div>
+                                    {% if reply.sentiment_label %}
+                                    <span class="badge sentiment-{{ reply.sentiment_label.lower() }}">
+                                        {{ reply.sentiment_label }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <p class="mb-0">{{ reply.content | replace('\n', '</p><p>') | safe }}</p>
+                                {% if reply.keywords %}
+                                <div class="mt-2">
+                                    {% set reply_keywords = reply.keywords | from_json %}
+                                    {% for keyword in reply_keywords[:3] %}
+                                    <span class="word-tag me-1" style="font-size: 0.75rem;">{{ keyword }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+
+                        <!-- Add Reply Form -->
+                        <div class="mt-4">
+                            <h6>Add Reply</h6>
+                            <form method="POST" action="{{ url_for('add_reply', review_id=review.id) }}">
+                                <div class="mb-3">
+                                    <textarea class="form-control" 
+                                              name="content" 
+                                              rows="3" 
+                                              placeholder="Add a reply to this review..."
+                                              required></textarea>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               name="author" 
+                                               placeholder="Your name (optional)">
+                                    </div>
+                                    <div class="col-md-6 text-md-end">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i data-feather="send" class="me-2"></i>Add Reply
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Actions -->
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="settings" class="me-2"></i>Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            {% if review.source_url %}
+                            <a href="{{ review.source_url }}" target="_blank" rel="noopener" class="btn btn-outline-primary">
+                                <i data-feather="external-link" class="me-2"></i>View Original
+                            </a>
+                            {% endif %}
+                            <a href="{{ url_for('add_review', project_id=review.project.id) }}" class="btn btn-outline-success">
+                                <i data-feather="plus" class="me-2"></i>Add Another Review
+                            </a>
+                            <a href="{{ url_for('project_details', project_id=review.project.id) }}" class="btn btn-outline-secondary">
+                                <i data-feather="arrow-left" class="me-2"></i>Back to Project
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Details -->
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="info" class="me-2"></i>Analysis Details
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>Word Count:</strong>
+                            <span class="text-muted">{{ review.word_count or 0 }} words</span>
+                        </div>
+                        {% if review.readability_score %}
+                        <div class="mb-3">
+                            <strong>Reading Level:</strong>
+                            <span class="text-muted">
+                                {% if review.readability_score >= 90 %}Very Easy
+                                {% elif review.readability_score >= 80 %}Easy
+                                {% elif review.readability_score >= 70 %}Fairly Easy
+                                {% elif review.readability_score >= 60 %}Standard
+                                {% elif review.readability_score >= 50 %}Fairly Difficult
+                                {% elif review.readability_score >= 30 %}Difficult
+                                {% else %}Very Difficult{% endif %}
+                            </span>
+                        </div>
+                        {% endif %}
+                        <div class="mb-3">
+                            <strong>Created:</strong>
+                            <span class="text-muted">{{ review.created_at.strftime('%B %d, %Y') }}</span>
+                        </div>
+                        {% if review.analyzed_at %}
+                        <div>
+                            <strong>Analyzed:</strong>
+                            <span class="text-muted">{{ review.analyzed_at.strftime('%B %d, %Y') }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Project Context -->
+                <div class="card fade-in">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="folder" class="me-2"></i>Project Context
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>{{ review.project.name }}</h6>
+                        {% if review.project.description %}
+                        <p class="text-muted small">{{ review.project.description[:100] }}{{ '...' if review.project.description|length > 100 else '' }}</p>
+                        {% endif %}
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="text-primary">{{ review.project.total_reviews }}</div>
+                                <small class="text-muted">Total Reviews</small>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-primary">{{ "%.2f"|format(review.project.avg_sentiment) }}</div>
+                                <small class="text-muted">Avg Sentiment</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate elements on page load
+    const fadeElements = document.querySelectorAll('.fade-in');
+    fadeElements.forEach((el, index) => {
+        setTimeout(() => {
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

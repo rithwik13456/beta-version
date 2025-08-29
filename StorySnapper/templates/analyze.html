@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Analyze URL - Story in Short{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="text-center mb-5">
+                    <h1 class="display-5 mb-3">
+                        <i data-feather="search" class="me-3"></i>Analyze Any URL
+                    </h1>
+                    <p class="lead text-muted">Enter any website URL to extract content and generate comprehensive insights with advanced data analysis.</p>
+                </div>
+                
+                {% if not analyzing %}
+                <!-- URL Input Form -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i data-feather="link" class="me-2"></i>Content Analysis
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="analyzeForm" action="{{ url_for('process') }}" method="POST">
+                            <div class="mb-4">
+                                <label for="url" class="form-label">Website URL</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text">
+                                        <i data-feather="globe"></i>
+                                    </span>
+                                    <input type="url" 
+                                           class="form-control url-input" 
+                                           id="url" 
+                                           name="url"
+                                           value="{{ url or '' }}"
+                                           placeholder="https://example.com/article"
+                                           required>
+                                </div>
+                                <div class="form-text">Enter the complete URL including http:// or https://</div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i data-feather="play" class="me-2"></i>Analyze Content
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <!-- Example URLs -->
+                        <div class="mt-4">
+                            <h6 class="text-muted mb-3">Try these example URLs:</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button class="btn btn-sm btn-outline-secondary example-url" data-url="https://medium.com/@example">Medium Article</button>
+                                <button class="btn btn-sm btn-outline-secondary example-url" data-url="https://www.bbc.com/news">BBC News</button>
+                                <button class="btn btn-sm btn-outline-secondary example-url" data-url="https://techcrunch.com">TechCrunch</button>
+                                <button class="btn btn-sm btn-outline-secondary example-url" data-url="https://www.reddit.com/r/technology">Reddit Tech</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% else %}
+                <!-- Processing State -->
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <div class="spinner mb-4"></div>
+                        <h3 class="mb-3">Analyzing Content...</h3>
+                        <p class="lead text-muted mb-4">We're extracting and analyzing content from: <strong>{{ url }}</strong></p>
+                        
+                        <div class="row g-3 text-start">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i data-feather="download" class="text-primary me-2"></i>
+                                    <span>Fetching webpage content</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <i data-feather="file-text" class="text-primary me-2"></i>
+                                    <span>Extracting text and metadata</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i data-feather="scissors" class="text-primary me-2"></i>
+                                    <span>Cleaning and preprocessing</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i data-feather="brain" class="text-primary me-2"></i>
+                                    <span>Performing sentiment analysis</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <i data-feather="bar-chart-2" class="text-primary me-2"></i>
+                                    <span>Generating statistics</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i data-feather="pie-chart" class="text-primary me-2"></i>
+                                    <span>Creating visualizations</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <small class="text-muted">This process typically takes 10-30 seconds depending on the content size.</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Auto-redirect to process -->
+                <form id="autoForm" action="{{ url_for('process') }}" method="POST" style="display: none;">
+                    <input type="hidden" name="url" value="{{ url }}">
+                </form>
+                
+                <script>
+                    // Auto-submit after 2 seconds to allow user to see the loading state
+                    setTimeout(function() {
+                        document.getElementById('autoForm').submit();
+                    }, 2000);
+                </script>
+                {% endif %}
+            </div>
+            
+            <div class="col-lg-4">
+                <!-- Info Panel -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="info" class="me-2"></i>What We Analyze
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h6>
+                                <i data-feather="heart" class="text-primary me-2"></i>Sentiment Analysis
+                            </h6>
+                            <small class="text-muted">Detect positive, negative, and neutral emotions in the content.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>
+                                <i data-feather="book" class="text-primary me-2"></i>Readability Metrics
+                            </h6>
+                            <small class="text-muted">Grade level, reading ease, and comprehension scores.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>
+                                <i data-feather="hash" class="text-primary me-2"></i>Statistical Analysis
+                            </h6>
+                            <small class="text-muted">Word count, sentence structure, and content statistics.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>
+                                <i data-feather="tag" class="text-primary me-2"></i>Keyword Extraction
+                            </h6>
+                            <small class="text-muted">Most frequent words and key terms identification.</small>
+                        </div>
+                        
+                        <div>
+                            <h6>
+                                <i data-feather="edit-3" class="text-primary me-2"></i>Content Summary
+                            </h6>
+                            <small class="text-muted">Automated summarization of main content points.</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tips -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="lightbulb" class="me-2"></i>Tips
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i data-feather="check" class="text-success me-2"></i>
+                                <small>Works with any public website</small>
+                            </li>
+                            <li class="mb-2">
+                                <i data-feather="check" class="text-success me-2"></i>
+                                <small>Best results with article-style content</small>
+                            </li>
+                            <li class="mb-2">
+                                <i data-feather="check" class="text-success me-2"></i>
+                                <small>Supports multiple languages</small>
+                            </li>
+                            <li>
+                                <i data-feather="check" class="text-success me-2"></i>
+                                <small>Results are saved for future reference</small>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Example URL functionality
+    const exampleButtons = document.querySelectorAll('.example-url');
+    const urlInput = document.getElementById('url');
+    
+    exampleButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            if (urlInput) {
+                urlInput.value = this.dataset.url;
+                urlInput.focus();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

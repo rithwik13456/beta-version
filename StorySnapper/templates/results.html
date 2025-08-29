@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Results - {{ analysis_data.title }} - Story in Short{% endblock %}
+
+{% block extra_head %}
+<style>
+.fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s ease;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <!-- Header -->
+        <div class="row mb-5">
+            <div class="col-lg-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('analyze') }}">Analyze</a></li>
+                        <li class="breadcrumb-item active">Results</li>
+                    </ol>
+                </nav>
+                
+                <h1 class="display-5 mb-3 fade-in">{{ analysis_data.title }}</h1>
+                <div class="d-flex align-items-center gap-3 mb-3 fade-in">
+                    <span class="badge sentiment-{{ analysis_data.sentiment.label.lower() }} fs-6">
+                        {{ analysis_data.sentiment.label }} Sentiment
+                    </span>
+                    <small class="text-muted">
+                        <i data-feather="calendar" class="me-1"></i>{{ analysis.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                    </small>
+                </div>
+                <div class="mb-3 fade-in">
+                    <small class="text-muted">
+                        <i data-feather="link" class="me-1"></i>
+                        <a href="{{ analysis.url }}" target="_blank" rel="noopener" class="text-decoration-none">
+                            {{ analysis.url[:80] }}{{ '...' if analysis.url|length > 80 else '' }}
+                            <i data-feather="external-link" class="ms-1"></i>
+                        </a>
+                    </small>
+                </div>
+            </div>
+            <div class="col-lg-4 text-lg-end fade-in">
+                <a href="{{ url_for('analyze') }}" class="btn btn-primary">
+                    <i data-feather="plus" class="me-2"></i>New Analysis
+                </a>
+                <button class="btn btn-outline-secondary copy-url ms-2" data-url="{{ analysis.url }}">
+                    <i data-feather="copy" class="me-2"></i>Copy URL
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistics Grid -->
+        <div class="stats-grid mb-5 fade-in">
+            <div class="stat-card">
+                <span class="stat-value">{{ analysis_data.statistics.word_count }}</span>
+                <span class="stat-label">Words</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">{{ analysis_data.statistics.sentence_count }}</span>
+                <span class="stat-label">Sentences</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">{{ "%.1f"|format(analysis_data.statistics.avg_sentence_length) }}</span>
+                <span class="stat-label">Avg Words/Sentence</span>
+            </div>
+            {% if analysis_data.statistics.readability_score > 0 %}
+            <div class="stat-card">
+                <span class="stat-value">{{ "%.0f"|format(analysis_data.statistics.readability_score) }}</span>
+                <span class="stat-label">Readability Score</span>
+            </div>
+            {% endif %}
+            {% if analysis_data.statistics.grade_level > 0 %}
+            <div class="stat-card">
+                <span class="stat-value">{{ "%.1f"|format(analysis_data.statistics.grade_level) }}</span>
+                <span class="stat-label">Grade Level</span>
+            </div>
+            {% endif %}
+            <div class="stat-card">
+                <span class="stat-value">{{ "%.2f"|format(analysis_data.sentiment.compound) }}</span>
+                <span class="stat-label">Sentiment Score</span>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <!-- Sentiment Analysis -->
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i data-feather="heart" class="me-2"></i>Sentiment Analysis
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Overall Sentiment</label>
+                                    <div>
+                                        <span class="badge sentiment-{{ analysis_data.sentiment.label.lower() }} fs-5">
+                                            {{ analysis_data.sentiment.label }}
+                                        </span>
+                                        <span class="text-muted ms-2">({{ "%.3f"|format(analysis_data.sentiment.compound) }})</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="row g-3">
+                                    <div class="col-4">
+                                        <div class="text-center">
+                                            <div class="h5 text-success">{{ "%.1f"|format(analysis_data.sentiment.positive * 100) }}%</div>
+                                            <small class="text-muted">Positive</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="text-center">
+                                            <div class="h5 text-danger">{{ "%.1f"|format(analysis_data.sentiment.negative * 100) }}%</div>
+                                            <small class="text-muted">Negative</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="text-center">
+                                            <div class="h5 text-secondary">{{ "%.1f"|format(analysis_data.sentiment.neutral * 100) }}%</div>
+                                            <small class="text-muted">Neutral</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                {% if analysis_data.charts and analysis_data.charts.sentiment %}
+                                <div class="chart-container">
+                                    <img src="{{ analysis_data.charts.sentiment }}" alt="Sentiment Chart" class="img-fluid">
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Word Analysis -->
+                {% if analysis_data.top_words %}
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i data-feather="hash" class="me-2"></i>Word Frequency Analysis
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Most Frequent Words</h6>
+                                <div class="top-words">
+                                    {% for word, count in analysis_data.top_words[:10] %}
+                                    <span class="word-tag">{{ word }} ({{ count }})</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                {% if analysis_data.charts and analysis_data.charts.words %}
+                                <div class="chart-container">
+                                    <img src="{{ analysis_data.charts.words }}" alt="Word Frequency Chart" class="img-fluid">
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Content Summary -->
+                {% if analysis_data.summary %}
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i data-feather="edit-3" class="me-2"></i>Content Summary
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">{{ analysis_data.summary }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Actions -->
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="settings" class="me-2"></i>Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{{ analysis.url }}" target="_blank" rel="noopener" class="btn btn-outline-primary">
+                                <i data-feather="external-link" class="me-2"></i>View Original
+                            </a>
+                            <button class="btn btn-outline-secondary copy-url" data-url="{{ analysis.url }}">
+                                <i data-feather="copy" class="me-2"></i>Copy URL
+                            </button>
+                            <a href="{{ url_for('analyze') }}" class="btn btn-outline-success">
+                                <i data-feather="plus" class="me-2"></i>New Analysis
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Info -->
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="info" class="me-2"></i>Analysis Details
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>Content Type:</strong>
+                            <span class="text-muted">Web Article</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Analysis Date:</strong>
+                            <span class="text-muted">{{ analysis.created_at.strftime('%B %d, %Y') }}</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Processing Time:</strong>
+                            <span class="text-muted">< 30 seconds</span>
+                        </div>
+                        {% if analysis_data.statistics.readability_score > 0 %}
+                        <div>
+                            <strong>Reading Level:</strong>
+                            <span class="text-muted">
+                                {% if analysis_data.statistics.readability_score >= 90 %}Very Easy
+                                {% elif analysis_data.statistics.readability_score >= 80 %}Easy
+                                {% elif analysis_data.statistics.readability_score >= 70 %}Fairly Easy
+                                {% elif analysis_data.statistics.readability_score >= 60 %}Standard
+                                {% elif analysis_data.statistics.readability_score >= 50 %}Fairly Difficult
+                                {% elif analysis_data.statistics.readability_score >= 30 %}Difficult
+                                {% else %}Very Difficult{% endif %}
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Related -->
+                <div class="card fade-in">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="trending-up" class="me-2"></i>What's Next?
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <a href="{{ url_for('analyze') }}" class="text-decoration-none">
+                                    <i data-feather="search" class="me-2"></i>Analyze another URL
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="{{ url_for('history') }}" class="text-decoration-none">
+                                    <i data-feather="clock" class="me-2"></i>View analysis history
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('index') }}" class="text-decoration-none">
+                                    <i data-feather="home" class="me-2"></i>Return to homepage
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate elements on page load
+    const fadeElements = document.querySelectorAll('.fade-in');
+    fadeElements.forEach((el, index) => {
+        setTimeout(() => {
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

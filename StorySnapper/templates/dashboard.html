@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Story in Short{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <!-- Header -->
+        <div class="row mb-5">
+            <div class="col-lg-8">
+                <h1 class="display-5 mb-3">
+                    <i data-feather="bar-chart-2" class="me-3"></i>Sentiment Analysis Dashboard
+                </h1>
+                <p class="lead text-muted">Monitor and analyze customer reviews and feedback sentiment across all your projects.</p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a href="{{ url_for('new_project') }}" class="btn btn-primary btn-lg">
+                    <i data-feather="plus" class="me-2"></i>New Project
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid mb-5 fade-in">
+            <div class="stat-card">
+                <span class="stat-value">{{ stats.total_projects }}</span>
+                <span class="stat-label">Projects</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">{{ stats.total_reviews }}</span>
+                <span class="stat-label">Reviews</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">{{ stats.total_replies }}</span>
+                <span class="stat-label">Replies</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value {{ 'text-success' if stats.avg_sentiment > 0.1 else 'text-danger' if stats.avg_sentiment < -0.1 else 'text-warning' }}">
+                    {{ "%.2f"|format(stats.avg_sentiment) }}
+                </span>
+                <span class="stat-label">Avg Sentiment</span>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <!-- Sentiment Overview -->
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i data-feather="pie-chart" class="me-2"></i>Overall Sentiment Distribution
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="h2 text-success">{{ stats.sentiment_distribution.positive }}</div>
+                                <small class="text-muted">Positive Reviews</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="h2 text-secondary">{{ stats.sentiment_distribution.neutral }}</div>
+                                <small class="text-muted">Neutral Reviews</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="h2 text-danger">{{ stats.sentiment_distribution.negative }}</div>
+                                <small class="text-muted">Negative Reviews</small>
+                            </div>
+                        </div>
+                        
+                        {% if stats.total_reviews > 0 %}
+                        <div class="mt-4">
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-success" style="width: {{ (stats.sentiment_distribution.positive / stats.total_reviews * 100)|round(1) }}%">
+                                    {{ (stats.sentiment_distribution.positive / stats.total_reviews * 100)|round(1) }}%
+                                </div>
+                                <div class="progress-bar bg-secondary" style="width: {{ (stats.sentiment_distribution.neutral / stats.total_reviews * 100)|round(1) }}%">
+                                    {{ (stats.sentiment_distribution.neutral / stats.total_reviews * 100)|round(1) }}%
+                                </div>
+                                <div class="progress-bar bg-danger" style="width: {{ (stats.sentiment_distribution.negative / stats.total_reviews * 100)|round(1) }}%">
+                                    {{ (stats.sentiment_distribution.negative / stats.total_reviews * 100)|round(1) }}%
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                {% if recent_reviews %}
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i data-feather="activity" class="me-2"></i>Recent Reviews
+                        </h4>
+                    </div>
+                    <div class="card-body p-0">
+                        {% for review in recent_reviews %}
+                        <div class="recent-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">
+                                        <a href="{{ url_for('review_details', review_id=review.id) }}" 
+                                           class="recent-url">{{ review.title or 'Review #' + review.id|string }}</a>
+                                    </h6>
+                                    <small class="text-muted d-block">{{ review.content[:100] }}{{ '...' if review.content|length > 100 else '' }}</small>
+                                    <div class="mt-1">
+                                        {% if review.sentiment_label %}
+                                        <span class="badge sentiment-{{ review.sentiment_label.lower() }} me-2">
+                                            {{ review.sentiment_label }}
+                                        </span>
+                                        {% endif %}
+                                        <small class="text-muted">{{ review.word_count or 0 }} words</small>
+                                        {% if review.author %}
+                                        <small class="text-muted ms-2">by {{ review.author }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <small class="recent-date">{{ review.created_at.strftime('%b %d') }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="card-footer text-center">
+                        <a href="{{ url_for('analytics') }}" class="btn btn-sm btn-outline-primary">
+                            View All Analytics <i data-feather="arrow-right" class="ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Quick Actions -->
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="zap" class="me-2"></i>Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('new_project') }}" class="btn btn-primary">
+                                <i data-feather="plus" class="me-2"></i>Create Project
+                            </a>
+                            <a href="{{ url_for('projects') }}" class="btn btn-outline-primary">
+                                <i data-feather="folder" class="me-2"></i>View Projects
+                            </a>
+                            <a href="{{ url_for('analytics') }}" class="btn btn-outline-secondary">
+                                <i data-feather="trending-up" class="me-2"></i>Analytics
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Projects -->
+                {% if recent_projects %}
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="folder" class="me-2"></i>Recent Projects
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        {% for project in recent_projects %}
+                        <div class="recent-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">
+                                        <a href="{{ url_for('project_details', project_id=project.id) }}" 
+                                           class="recent-url">{{ project.name }}</a>
+                                    </h6>
+                                    <div class="mt-1">
+                                        <small class="text-muted">{{ project.total_reviews }} reviews</small>
+                                        {% if project.avg_sentiment != 0 %}
+                                        <span class="badge sentiment-{{ 'positive' if project.avg_sentiment > 0.1 else 'negative' if project.avg_sentiment < -0.1 else 'neutral' }} ms-2">
+                                            {{ "%.2f"|format(project.avg_sentiment) }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Help & Tips -->
+                <div class="card fade-in">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="help-circle" class="me-2"></i>Getting Started
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-3">
+                                <i data-feather="check" class="text-success me-2"></i>
+                                <strong>Create a Project</strong><br>
+                                <small class="text-muted">Organize your reviews by product, service, or campaign</small>
+                            </li>
+                            <li class="mb-3">
+                                <i data-feather="check" class="text-success me-2"></i>
+                                <strong>Add Reviews</strong><br>
+                                <small class="text-muted">Import customer feedback and reviews for analysis</small>
+                            </li>
+                            <li class="mb-3">
+                                <i data-feather="check" class="text-success me-2"></i>
+                                <strong>Track Replies</strong><br>
+                                <small class="text-muted">Monitor responses and conversation sentiment</small>
+                            </li>
+                            <li>
+                                <i data-feather="check" class="text-success me-2"></i>
+                                <strong>View Insights</strong><br>
+                                <small class="text-muted">Get actionable insights from sentiment trends</small>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate elements on page load
+    const fadeElements = document.querySelectorAll('.fade-in');
+    fadeElements.forEach((el, index) => {
+        setTimeout(() => {
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

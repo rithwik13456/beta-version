@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Add Review - {{ project.name }} - Story in Short{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Header -->
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('projects') }}">Projects</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('project_details', project_id=project.id) }}">{{ project.name }}</a></li>
+                        <li class="breadcrumb-item active">Add Review</li>
+                    </ol>
+                </nav>
+                
+                <div class="text-center mb-5">
+                    <h1 class="display-5 mb-3">
+                        <i data-feather="plus-circle" class="me-3"></i>Add New Review
+                    </h1>
+                    <p class="lead text-muted">Add a customer review to <strong>{{ project.name }}</strong> for sentiment analysis.</p>
+                </div>
+
+                <!-- Form -->
+                <div class="card fade-in">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i data-feather="edit-3" class="me-2"></i>Review Details
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST">
+                            <div class="row g-4">
+                                <div class="col-md-8">
+                                    <label for="title" class="form-label">Review Title <span class="text-muted">(optional)</span></label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="title" 
+                                           name="title" 
+                                           placeholder="e.g., Great product, Amazing service, Needs improvement"
+                                           maxlength="300">
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <label for="rating" class="form-label">Rating <span class="text-muted">(optional)</span></label>
+                                    <select class="form-select" id="rating" name="rating">
+                                        <option value="">No rating</option>
+                                        <option value="5">5 Stars - Excellent</option>
+                                        <option value="4">4 Stars - Good</option>
+                                        <option value="3">3 Stars - Average</option>
+                                        <option value="2">2 Stars - Poor</option>
+                                        <option value="1">1 Star - Terrible</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="content" class="form-label">Review Content <span class="text-danger">*</span></label>
+                                <textarea class="form-control" 
+                                          id="content" 
+                                          name="content" 
+                                          rows="8" 
+                                          placeholder="Paste or type the customer review content here. This is the main text that will be analyzed for sentiment..."
+                                          required></textarea>
+                                <div class="form-text">The review content will be analyzed for sentiment, keywords, and readability.</div>
+                            </div>
+
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label for="author" class="form-label">Author <span class="text-muted">(optional)</span></label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="author" 
+                                           name="author" 
+                                           placeholder="Customer name or username"
+                                           maxlength="100">
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="source_url" class="form-label">Source URL <span class="text-muted">(optional)</span></label>
+                                    <input type="url" 
+                                           class="form-control" 
+                                           id="source_url" 
+                                           name="source_url" 
+                                           placeholder="https://example.com/review/123"
+                                           maxlength="500">
+                                    <div class="form-text">Link to the original review if available.</div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                                <a href="{{ url_for('project_details', project_id=project.id) }}" class="btn btn-outline-secondary">
+                                    <i data-feather="arrow-left" class="me-2"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i data-feather="check" class="me-2"></i>Analyze & Save Review
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Help Section -->
+                <div class="card mt-4 fade-in">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="info" class="me-2"></i>What We'll Analyze
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i data-feather="heart" class="text-primary me-3 mt-1"></i>
+                                    <div>
+                                        <h6>Sentiment Analysis</h6>
+                                        <small class="text-muted">Detect positive, negative, and neutral emotions with confidence scores.</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i data-feather="hash" class="text-primary me-3 mt-1"></i>
+                                    <div>
+                                        <h6>Keyword Extraction</h6>
+                                        <small class="text-muted">Identify the most important words and phrases in the review.</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i data-feather="book" class="text-primary me-3 mt-1"></i>
+                                    <div>
+                                        <h6>Readability Metrics</h6>
+                                        <small class="text-muted">Calculate reading difficulty and comprehension scores.</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i data-feather="trending-up" class="text-primary me-3 mt-1"></i>
+                                    <div>
+                                        <h6>Historical Tracking</h6>
+                                        <small class="text-muted">Track sentiment trends and patterns over time.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate elements on page load
+    const fadeElements = document.querySelectorAll('.fade-in');
+    fadeElements.forEach((el, index) => {
+        setTimeout(() => {
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+
+    // Auto-focus on content textarea
+    document.getElementById('content').focus();
+
+    // Word count indicator
+    const contentTextarea = document.getElementById('content');
+    const wordCountDiv = document.createElement('div');
+    wordCountDiv.className = 'form-text mt-1';
+    wordCountDiv.id = 'wordCount';
+    contentTextarea.parentNode.insertBefore(wordCountDiv, contentTextarea.nextSibling.nextSibling);
+
+    function updateWordCount() {
+        const words = contentTextarea.value.trim().split(/\s+/).filter(word => word.length > 0);
+        const wordCount = contentTextarea.value.trim() === '' ? 0 : words.length;
+        wordCountDiv.textContent = `${wordCount} words`;
+    }
+
+    contentTextarea.addEventListener('input', updateWordCount);
+    updateWordCount();
+});
+</script>
+{% endblock %}

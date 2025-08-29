@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.name }} - Story in Short{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <!-- Header -->
+        <div class="row mb-5">
+            <div class="col-lg-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('projects') }}">Projects</a></li>
+                        <li class="breadcrumb-item active">{{ project.name }}</li>
+                    </ol>
+                </nav>
+                
+                <h1 class="display-5 mb-3">{{ project.name }}</h1>
+                {% if project.description %}
+                <p class="lead text-muted">{{ project.description }}</p>
+                {% endif %}
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a href="{{ url_for('add_review', project_id=project.id) }}" class="btn btn-primary btn-lg">
+                    <i data-feather="plus" class="me-2"></i>Add Review
+                </a>
+            </div>
+        </div>
+
+        <!-- Project Stats -->
+        <div class="stats-grid mb-5 fade-in">
+            <div class="stat-card">
+                <span class="stat-value">{{ project.total_reviews }}</span>
+                <span class="stat-label">Total Reviews</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value {{ 'text-success' if project.avg_sentiment > 0.1 else 'text-danger' if project.avg_sentiment < -0.1 else 'text-warning' }}">
+                    {{ "%.2f"|format(project.avg_sentiment) }}
+                </span>
+                <span class="stat-label">Avg Sentiment</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value text-success">{{ project.sentiment_distribution.positive }}</span>
+                <span class="stat-label">Positive</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value text-danger">{{ project.sentiment_distribution.negative }}</span>
+                <span class="stat-label">Negative</span>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <!-- Sentiment Trend -->
+                {% if sentiment_over_time %}
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i data-feather="trending-up" class="me-2"></i>Sentiment Trend
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            {% for week_data in sentiment_over_time %}
+                            <div class="col-3">
+                                <div class="h5 {{ 'text-success' if week_data.sentiment > 0.1 else 'text-danger' if week_data.sentiment < -0.1 else 'text-warning' }}">
+                                    {{ "%.2f"|format(week_data.sentiment) }}
+                                </div>
+                                <small class="text-muted">{{ week_data.week }}</small>
+                                <br><small class="text-muted">({{ week_data.count }} reviews)</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Reviews List -->
+                <div class="card fade-in">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i data-feather="message-square" class="me-2"></i>Reviews
+                        </h4>
+                        <span class="badge bg-primary">{{ reviews.total }} total</span>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if reviews.items %}
+                            {% for review in reviews.items %}
+                            <div class="recent-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">
+                                            <a href="{{ url_for('review_details', review_id=review.id) }}" 
+                                               class="recent-url">{{ review.title or 'Review #' + review.id|string }}</a>
+                                        </h6>
+                                        <p class="text-muted mb-2">{{ review.content[:200] }}{{ '...' if review.content|length > 200 else '' }}</p>
+                                        <div class="d-flex align-items-center gap-3">
+                                            {% if review.sentiment_label %}
+                                            <span class="badge sentiment-{{ review.sentiment_label.lower() }}">
+                                                {{ review.sentiment_label }} ({{ "%.2f"|format(review.sentiment_score) }})
+                                            </span>
+                                            {% endif %}
+                                            {% if review.rating %}
+                                            <div class="text-warning">
+                                                {% for i in range(review.rating) %}★{% endfor %}
+                                                {% for i in range(5 - review.rating) %}☆{% endfor %}
+                                            </div>
+                                            {% endif %}
+                                            <small class="text-muted">{{ review.word_count or 0 }} words</small>
+                                            {% if review.total_replies > 0 %}
+                                            <small class="text-muted">{{ review.total_replies }} replies</small>
+                                            {% endif %}
+                                            {% if review.author %}
+                                            <small class="text-muted">by {{ review.author }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <small class="recent-date">{{ review.created_at.strftime('%b %d') }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+
+                            <!-- Pagination -->
+                            {% if reviews.pages > 1 %}
+                            <div class="p-3">
+                                <nav aria-label="Reviews pagination">
+                                    <ul class="pagination justify-content-center mb-0">
+                                        {% if reviews.has_prev %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('project_details', project_id=project.id, page=reviews.prev_num) }}">Previous</a>
+                                        </li>
+                                        {% endif %}
+
+                                        {% for page_num in reviews.iter_pages() %}
+                                            {% if page_num %}
+                                                {% if page_num != reviews.page %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="{{ url_for('project_details', project_id=project.id, page=page_num) }}">{{ page_num }}</a>
+                                                </li>
+                                                {% else %}
+                                                <li class="page-item active">
+                                                    <span class="page-link">{{ page_num }}</span>
+                                                </li>
+                                                {% endif %}
+                                            {% else %}
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                            {% endif %}
+                                        {% endfor %}
+
+                                        {% if reviews.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('project_details', project_id=project.id, page=reviews.next_num) }}">Next</a>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                            {% endif %}
+                        {% else %}
+                        <div class="text-center py-5">
+                            <div class="mb-3">
+                                <i data-feather="message-square" style="width: 48px; height: 48px;" class="text-muted"></i>
+                            </div>
+                            <h5>No Reviews Yet</h5>
+                            <p class="text-muted mb-3">Start adding customer reviews to analyze sentiment and track trends.</p>
+                            <a href="{{ url_for('add_review', project_id=project.id) }}" class="btn btn-primary">
+                                <i data-feather="plus" class="me-2"></i>Add First Review
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Quick Stats -->
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="pie-chart" class="me-2"></i>Sentiment Breakdown
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if project.total_reviews > 0 %}
+                        <div class="progress mb-3" style="height: 20px;">
+                            <div class="progress-bar bg-success" 
+                                 style="width: {{ (project.sentiment_distribution.positive / project.total_reviews * 100)|round(1) }}%">
+                                {{ (project.sentiment_distribution.positive / project.total_reviews * 100)|round(1) }}%
+                            </div>
+                            <div class="progress-bar bg-secondary" 
+                                 style="width: {{ (project.sentiment_distribution.neutral / project.total_reviews * 100)|round(1) }}%">
+                                {{ (project.sentiment_distribution.neutral / project.total_reviews * 100)|round(1) }}%
+                            </div>
+                            <div class="progress-bar bg-danger" 
+                                 style="width: {{ (project.sentiment_distribution.negative / project.total_reviews * 100)|round(1) }}%">
+                                {{ (project.sentiment_distribution.negative / project.total_reviews * 100)|round(1) }}%
+                            </div>
+                        </div>
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="text-success h6">{{ project.sentiment_distribution.positive }}</div>
+                                <small class="text-muted">Positive</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-secondary h6">{{ project.sentiment_distribution.neutral }}</div>
+                                <small class="text-muted">Neutral</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-danger h6">{{ project.sentiment_distribution.negative }}</div>
+                                <small class="text-muted">Negative</small>
+                            </div>
+                        </div>
+                        {% else %}
+                        <p class="text-muted text-center mb-0">No reviews to analyze yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="settings" class="me-2"></i>Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('add_review', project_id=project.id) }}" class="btn btn-primary">
+                                <i data-feather="plus" class="me-2"></i>Add Review
+                            </a>
+                            <a href="{{ url_for('analytics') }}" class="btn btn-outline-secondary">
+                                <i data-feather="bar-chart-2" class="me-2"></i>View Analytics
+                            </a>
+                            <a href="{{ url_for('projects') }}" class="btn btn-outline-secondary">
+                                <i data-feather="arrow-left" class="me-2"></i>Back to Projects
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project Info -->
+                <div class="card fade-in">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="info" class="me-2"></i>Project Info
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <strong>Created:</strong>
+                            <span class="text-muted">{{ project.created_at.strftime('%B %d, %Y') }}</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Last Updated:</strong>
+                            <span class="text-muted">{{ project.updated_at.strftime('%B %d, %Y') }}</span>
+                        </div>
+                        <div>
+                            <strong>Total Reviews:</strong>
+                            <span class="text-muted">{{ project.total_reviews }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate elements on page load
+    const fadeElements = document.querySelectorAll('.fade-in');
+    fadeElements.forEach((el, index) => {
+        setTimeout(() => {
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

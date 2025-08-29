@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Projects - Story in Short{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <!-- Header -->
+        <div class="row mb-5">
+            <div class="col-lg-8">
+                <h1 class="display-5 mb-3">
+                    <i data-feather="folder" class="me-3"></i>Projects
+                </h1>
+                <p class="lead text-muted">Manage and analyze sentiment across all your review projects.</p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a href="{{ url_for('new_project') }}" class="btn btn-primary btn-lg">
+                    <i data-feather="plus" class="me-2"></i>New Project
+                </a>
+            </div>
+        </div>
+
+        {% if projects %}
+        <!-- Projects Grid -->
+        <div class="row g-4">
+            {% for project in projects %}
+            <div class="col-lg-6 col-xl-4">
+                <div class="card h-100 fade-in">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ project.name }}</h5>
+                        <small class="text-muted">Created {{ project.created_at.strftime('%b %d, %Y') }}</small>
+                    </div>
+                    <div class="card-body">
+                        {% if project.description %}
+                        <p class="text-muted mb-3">{{ project.description }}</p>
+                        {% endif %}
+                        
+                        <div class="row g-2 text-center mb-3">
+                            <div class="col-4">
+                                <div class="h6 text-primary">{{ project.total_reviews }}</div>
+                                <small class="text-muted">Reviews</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="h6 {{ 'text-success' if project.avg_sentiment > 0.1 else 'text-danger' if project.avg_sentiment < -0.1 else 'text-warning' }}">
+                                    {{ "%.2f"|format(project.avg_sentiment) }}
+                                </div>
+                                <small class="text-muted">Sentiment</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="h6 text-info">{{ project.sentiment_distribution.positive + project.sentiment_distribution.negative + project.sentiment_distribution.neutral }}</div>
+                                <small class="text-muted">Total</small>
+                            </div>
+                        </div>
+
+                        <!-- Sentiment Distribution -->
+                        {% if project.total_reviews > 0 %}
+                        <div class="progress mb-3" style="height: 8px;">
+                            <div class="progress-bar bg-success" 
+                                 style="width: {{ (project.sentiment_distribution.positive / project.total_reviews * 100)|round(1) }}%">
+                            </div>
+                            <div class="progress-bar bg-secondary" 
+                                 style="width: {{ (project.sentiment_distribution.neutral / project.total_reviews * 100)|round(1) }}%">
+                            </div>
+                            <div class="progress-bar bg-danger" 
+                                 style="width: {{ (project.sentiment_distribution.negative / project.total_reviews * 100)|round(1) }}%">
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('project_details', project_id=project.id) }}" class="btn btn-primary btn-sm flex-grow-1">
+                                <i data-feather="eye" class="me-1"></i>View
+                            </a>
+                            <a href="{{ url_for('add_review', project_id=project.id) }}" class="btn btn-outline-secondary btn-sm">
+                                <i data-feather="plus" class="me-1"></i>Add Review
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i data-feather="folder-plus" style="width: 64px; height: 64px;" class="text-muted"></i>
+            </div>
+            <h3>No Projects Yet</h3>
+            <p class="text-muted mb-4">Create your first project to start analyzing customer reviews and feedback.</p>
+            <a href="{{ url_for('new_project') }}" class="btn btn-primary btn-lg">
+                <i data-feather="plus" class="me-2"></i>Create Your First Project
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate elements on page load
+    const fadeElements = document.querySelectorAll('.fade-in');
+    fadeElements.forEach((el, index) => {
+        setTimeout(() => {
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}
